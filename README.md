@@ -1,5 +1,11 @@
 # Logistics Performance & Freight Audit Dashboard
 
+## 📊 Dashboard Preview
+![Main Dashboard View](img/print-2-logistics-freight-audit.png)
+
+### Data Model
+![Star Schema Model](imgprint-1-logistics-freight-audit.png)
+
 ## 📌 Overview
 This project features a comprehensive **Freight Audit & Carrier Benchmarking Dashboard** developed in Qlik Sense. It was designed to provide logistics managers with actionable insights into transportation costs, delivery efficiency (OTIF), and carrier performance.
 
@@ -25,5 +31,5 @@ This project features a comprehensive **Freight Audit & Carrier Benchmarking Das
 3. If necessary, update the data connection path to point to the `data/` folder CSV.
 
 ---
-**Developed by [Seu Nome]**
+**Developed by Abimael Brilhante Soares**
 *Focus: Data Analytics | Logistics | SAP Finance Integration*
