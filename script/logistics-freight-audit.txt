@@ -1,0 +1,73 @@
+// --- STAGE 1: SETTING VARIABLES ---
+SET ThousandSep=',';
+SET DecimalSep='.';
+SET MoneyThousandSep='.';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='R$ #.##0,00;-R$ #.##0,00';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='pt-BR';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='jan.;fev.;mar.;abr.;mai.;jun.;jul.;ago.;set.;out.;nov.;dez.';
+SET LongMonthNames='janeiro;fevereiro;março;abril;maio;junho;julho;agosto;setembro;outubro;novembro;dezembro';
+SET DayNames='seg.;ter.;qua.;qui.;sex.;sáb.;dom.';
+SET LongDayNames='segunda-feira;terça-feira;quarta-feira;quinta-feira;sexta-feira;sábado;domingo';
+SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
+
+// --- STAGE 2: LOADING DATA (Fact Table) ---
+Freight_Data:
+LOAD
+    "Order ID",
+    "Carrier ID",
+    "Origin Region",
+    "Destination City",
+    Date("Order Date") as OrderDate,
+    Date("Delivery Date") as DeliveryDate,
+    Num(Num#([Freight Value], '#.##0,00', '.', ',')) as [Freight Value],
+    Num(Num#([Weight (KG)], '#.##0,00', '.', ',')) as [Weight (KG)],
+    // Logic for OTIF (On-Time In-Full)
+    If("Delivery Date" <= "Promised Date", 1, 0) as IsOnTime
+FROM [lib://Fiscal - Desenvolvimento:DataFiles/logistics_raw.csv]
+(txt, codepage is 28591, embedded labels, delimiter is ',', msq);
+
+// --- STAGE 3: DIMENSION TABLES ---
+Carriers:
+LOAD
+    "Carrier ID",
+    "Carrier Name",
+    "Service Level"
+FROM [lib://Fiscal - Desenvolvimento:DataFiles/dim_carriers.csv]
+(txt, codepage is 28591, embedded labels, delimiter is ',', msq);
+
+// --- STAGE 4: MASTER CALENDAR ---
+Temp_Calendar:
+LOAD
+    Min(OrderDate) as MinDate,
+    Max(OrderDate) as MaxDate
+Resident Freight_Data;
+
+LET vMinDate = Peek('MinDate', 0, 'Temp_Calendar');
+LET vMaxDate = Peek('MaxDate', 0, 'Temp_Calendar');
+DROP Table Temp_Calendar;
+
+MasterCalendar:
+LOAD
+    TempDate as OrderDate,
+    Week(TempDate) as Week,
+    Year(TempDate) as Year,
+    Month(TempDate) as Month,
+    'Q' & Ceil(Month(TempDate)/3) as Quarter
+;
+LOAD
+    Date($(vMinDate) + IterNo() - 1) as TempDate
+AutoGenerate 1
+While $(vMinDate) + IterNo() - 1 <= $(vMaxDate);
+
+
+
+
